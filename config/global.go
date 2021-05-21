@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -112,7 +113,25 @@ func writeSection(w io.Writer, name string) error {
 	return err
 }
 
+func (g *Global) validate() error {
+	if len(g.Pools) == 0 {
+		return errors.New("must have at least one pool")
+	}
+
+	for _, pool := range g.Pools {
+		if err := pool.validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (g *Global) Write(w io.Writer) error {
+	if err := g.validate(); err != nil {
+		return err
+	}
+
 	if v := g.PIDFile; v != "" {
 		if err := writeString(w, "pid", v); err != nil {
 			return err

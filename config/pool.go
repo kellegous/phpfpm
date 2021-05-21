@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"io"
 	"time"
 )
@@ -26,6 +27,34 @@ type Pool struct {
 	Access                  Access
 }
 
+func (p *Pool) validate() error {
+	// TODO(knorton): validate listen
+
+	if err := p.ProcessManager.validate(); err != nil {
+		return err
+	}
+
+	if p.User == "" {
+		return errors.New("user is required")
+	}
+
+	return nil
+}
+
 func (p *Pool) write(w io.Writer) error {
+	if err := p.Listen.write(w); err != nil {
+		return err
+	}
+
+	if err := writeString(w, "user", p.User); err != nil {
+		return err
+	}
+
+	if v := p.Group; v != "" {
+		if err := writeString(w, "group", v); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
