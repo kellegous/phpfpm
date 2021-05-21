@@ -2,29 +2,46 @@ package config
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
-func TestWrite(t *testing.T) {
+func fromLines(lines ...string) string {
+	return strings.Join(lines, "\n")
+}
+
+func TestGlobalWrite(t *testing.T) {
 	tests := []struct {
-		Global   *Global
+		Input    func() *Global
 		Expected string
 	}{
 		{
-			&Global{},
-			"",
+			func() *Global {
+				g := New()
+				g.WithPool("www", "127.0.0.1:8080", "root", TypeStatic, 3)
+				return g
+			},
+			fromLines(
+				"[www]",
+				"listen = 127.0.0.1:8080",
+				"user = root",
+				"pm = static",
+				"pm.max_children = 3",
+				"",
+			),
 		},
 	}
 
 	for _, test := range tests {
 		var buf bytes.Buffer
 
-		if err := test.Global.Write(&buf); err != nil {
+		g := test.Input()
+		if err := g.Write(&buf); err != nil {
 			t.Fatal(err)
 		}
 
 		if test.Expected != buf.String() {
-			t.Fatal(test.Expected)
+			t.Fatalf("results do not match\nEXPECTED:\n%s\nGOT:\n%s\n", test.Expected, buf.String())
 		}
 	}
 }

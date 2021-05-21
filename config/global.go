@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"time"
 )
@@ -29,6 +28,12 @@ type Global struct {
 	RLimitFiles               int
 	RlimitCore                int
 	Pools                     map[string]*Pool
+}
+
+func New() *Global {
+	return &Global{
+		Pools: map[string]*Pool{},
+	}
 }
 
 func (g *Global) WithPIDFile(v string) *Global {
@@ -88,31 +93,6 @@ func (g *Global) WithPool(
 	return p
 }
 
-func writeString(w io.Writer, key, val string) error {
-	_, err := fmt.Fprintf(w, "%s = %s\n", key, val)
-	return err
-}
-
-func writeInt(w io.Writer, key string, val int) error {
-	_, err := fmt.Fprintf(w, "%s = %d\n", key, val)
-	return err
-}
-
-func writeBool(w io.Writer, key string, val bool) error {
-	s := "no"
-	if val {
-		s = "yes"
-	}
-
-	_, err := fmt.Fprintf(w, "%s = %s\n", key, s)
-	return err
-}
-
-func writeSection(w io.Writer, name string) error {
-	_, err := fmt.Fprintf(w, "[%s]\n", name)
-	return err
-}
-
 func (g *Global) validate() error {
 	if len(g.Pools) == 0 {
 		return errors.New("must have at least one pool")
@@ -128,52 +108,52 @@ func (g *Global) validate() error {
 }
 
 func (g *Global) Write(w io.Writer) error {
+	return g.write(&writer{w})
+}
+
+func (g *Global) write(w *writer) error {
 	if err := g.validate(); err != nil {
 		return err
 	}
 
 	if v := g.PIDFile; v != "" {
-		if err := writeString(w, "pid", v); err != nil {
+		if err := w.writeString("pid", v); err != nil {
 			return err
 		}
 	}
 
 	if v := g.ErrorLog; v != "" {
-		if err := writeString(w, "error_log", v); err != nil {
+		if err := w.writeString("error_log", v); err != nil {
 			return err
 		}
 	}
 
 	if v := g.LogLevel; v != "" {
-		if err := writeString(w, "log_level", string(v)); err != nil {
+		if err := w.writeString("log_level", string(v)); err != nil {
 			return err
 		}
 	}
 
 	if v := g.LogLimit; v != 0 {
-		if err := writeInt(w, "log_limit", v); err != nil {
+		if err := w.writeInt("log_limit", v); err != nil {
 			return err
 		}
 	}
 
 	if v := g.LogBuffering; v != nil {
-		if err := writeBool(w, "log_buffering", *v); err != nil {
+		if err := w.writeBool("log_buffering", *v); err != nil {
 			return err
 		}
 	}
 
 	if v := g.EmergencyRestartThreshold; v != 0 {
-		if err := writeInt(w, "emergency_restart_threshold", v); err != nil {
+		if err := w.writeInt("emergency_restart_threshold", v); err != nil {
 			return err
 		}
 	}
 
 	if v := g.ProcessControlTimeout; v != 0 {
-		if err := writeString(
-			w,
-			"process_control_timeout",
-			fmt.Sprintf("%ds", int(v.Seconds())),
-		); err != nil {
+		if err := w.writeDuration("process_control_timeout", v); err != nil {
 			return err
 		}
 	}
@@ -185,19 +165,19 @@ func (g *Global) Write(w io.Writer) error {
 	}
 
 	if v := g.RLimitFiles; v != 0 {
-		if err := writeInt(w, "rlimit_files", v); err != nil {
+		if err := w.writeInt("rlimit_files", v); err != nil {
 			return err
 		}
 	}
 
 	if v := g.RlimitCore; v != 0 {
-		if err := writeInt(w, "rlimit_core", v); err != nil {
+		if err := w.writeInt("rlimit_core", v); err != nil {
 			return err
 		}
 	}
 
 	for name, pool := range g.Pools {
-		if err := writeSection(w, name); err != nil {
+		if err := w.writeSection(name); err != nil {
 			return err
 		}
 

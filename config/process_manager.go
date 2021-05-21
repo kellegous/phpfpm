@@ -2,8 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"time"
 )
 
@@ -54,25 +52,23 @@ func (p *ProcessManager) validate() error {
 	return nil
 }
 
-func (p *ProcessManager) write(w io.Writer) error {
+func (p *ProcessManager) write(w *writer) error {
 	if err := p.validate(); err != nil {
 		return err
 	}
 
-	if err := writeString(w, "pm", string(p.Type)); err != nil {
+	if err := w.writeString("pm", string(p.Type)); err != nil {
 		return err
 	}
 
-	if err := writeInt(
-		w,
+	if err := w.writeInt(
 		"pm.max_children",
 		p.MaxChildren); err != nil {
 		return err
 	}
 
 	if v := p.MinSpareServers; v != nil {
-		if err := writeInt(
-			w,
+		if err := w.writeInt(
 			"pm.min_spare_servers",
 			*v); err != nil {
 			return err
@@ -80,8 +76,7 @@ func (p *ProcessManager) write(w io.Writer) error {
 	}
 
 	if v := p.MaxSpareServers; v != nil {
-		if err := writeInt(
-			w,
+		if err := w.writeInt(
 			"pm.max_spare_servers",
 			*v); err != nil {
 			return err
@@ -89,28 +84,19 @@ func (p *ProcessManager) write(w io.Writer) error {
 	}
 
 	if v := p.ProcessIdleTimeout; v != 0 {
-		if err := writeString(
-			w,
-			"pm.process_idle_timeout",
-			fmt.Sprintf("%ds", int(v.Seconds()))); err != nil {
+		if err := w.writeDuration("pm.process_idle_timeout", v); err != nil {
 			return err
 		}
 	}
 
 	if v := p.MaxRequests; v != 0 {
-		if err := writeInt(
-			w,
-			"pm.max_requests",
-			v); err != nil {
+		if err := w.writeInt("pm.max_requests", v); err != nil {
 			return err
 		}
 	}
 
 	if v := p.StatusPath; v != "" {
-		if err := writeString(
-			w,
-			"pm.status_path",
-			v); err != nil {
+		if err := w.writeString("pm.status_path", v); err != nil {
 			return err
 		}
 	}
