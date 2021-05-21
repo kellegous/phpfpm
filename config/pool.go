@@ -6,6 +6,7 @@ import (
 )
 
 type Pool struct {
+	Name                    string
 	Listen                  Listen
 	User                    string
 	Group                   string

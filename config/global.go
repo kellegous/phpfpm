@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"time"
 )
@@ -27,13 +28,11 @@ type Global struct {
 	Process                   *Process
 	RLimitFiles               int
 	RlimitCore                int
-	Pools                     map[string]*Pool
+	Pools                     []*Pool
 }
 
 func New() *Global {
-	return &Global{
-		Pools: map[string]*Pool{},
-	}
+	return &Global{}
 }
 
 func (g *Global) WithPIDFile(v string) *Global {
@@ -78,6 +77,7 @@ func (g *Global) WithPool(
 	maxChildren int,
 ) *Pool {
 	p := &Pool{
+		Name: name,
 		Listen: Listen{
 			Addr: addr,
 		},
@@ -87,9 +87,7 @@ func (g *Global) WithPool(
 			MaxChildren: maxChildren,
 		},
 	}
-
-	g.Pools[name] = p
-
+	g.Pools = append(g.Pools, p)
 	return p
 }
 
@@ -98,7 +96,13 @@ func (g *Global) validate() error {
 		return errors.New("must have at least one pool")
 	}
 
+	seen := map[string]bool{}
 	for _, pool := range g.Pools {
+		if seen[pool.Name] {
+			return fmt.Errorf("duplicate pool: %s", pool.Name)
+		}
+		seen[pool.Name] = true
+
 		if err := pool.validate(); err != nil {
 			return err
 		}
@@ -176,8 +180,8 @@ func (g *Global) write(w *writer) error {
 		}
 	}
 
-	for name, pool := range g.Pools {
-		if err := w.writeSection(name); err != nil {
+	for _, pool := range g.Pools {
+		if err := w.writeSection(pool.Name); err != nil {
 			return err
 		}
 
