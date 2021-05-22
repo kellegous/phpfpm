@@ -67,6 +67,14 @@ func (p *ProcessManager) write(w *writer) error {
 		return err
 	}
 
+	if v := p.StartServers; v != 0 {
+		if err := w.writeInt(
+			"pm.start_servers",
+			v); err != nil {
+			return err
+		}
+	}
+
 	if v := p.MinSpareServers; v != nil {
 		if err := w.writeInt(
 			"pm.min_spare_servers",

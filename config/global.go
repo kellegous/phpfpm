@@ -165,7 +165,7 @@ func (g *Global) write(w *writer) error {
 		return err
 	}
 
-	if err := w.writeBool("daemon", false); err != nil {
+	if err := w.writeBool("daemonize", false); err != nil {
 		return err
 	}
 
