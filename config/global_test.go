@@ -22,6 +22,7 @@ func TestGlobalWrite(t *testing.T) {
 				return g
 			},
 			fromLines(
+				"daemon = no",
 				"[www]",
 				"listen = 127.0.0.1:8080",
 				"user = root",

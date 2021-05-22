@@ -27,6 +27,61 @@ type Pool struct {
 	Access                  Access
 }
 
+func (p *Pool) WithGroup(v string) *Pool {
+	p.Group = v
+	return p
+}
+
+func (p *Pool) WithPrefix(v string) *Pool {
+	p.Prefix = v
+	return p
+}
+
+func (p *Pool) WithRequestTerminateTimeout(v time.Duration) *Pool {
+	p.RequestSlowLogTimeout = v
+	return p
+}
+
+func (p *Pool) WithRequestSlowLogTimeout(v time.Duration) *Pool {
+	p.RequestSlowLogTimeout = v
+	return p
+}
+
+func (p *Pool) WithSlowLog(v string) *Pool {
+	p.SlowLog = v
+	return p
+}
+
+func (p *Pool) WithRlimitFiles(v int) *Pool {
+	p.RlimitFiles = v
+	return p
+}
+
+func (p *Pool) WithRlimitCore(v int) *Pool {
+	p.RlimitCore = v
+	return p
+}
+
+func (p *Pool) WithChroot(v string) *Pool {
+	p.Chroot = v
+	return p
+}
+
+func (p *Pool) WithCatchWorkersOutput(v bool) *Pool {
+	p.CatchWorkersOutput = v
+	return p
+}
+
+func (p *Pool) WithDecorateWorkersOutput(v bool) *Pool {
+	p.DecorateWorkersOutput = &v
+	return p
+}
+
+func (p *Pool) WithClearEnv(v bool) *Pool {
+	p.ClearEnv = &v
+	return p
+}
+
 func (p *Pool) validate() error {
 	if err := p.Listen.validate(); err != nil {
 		return err

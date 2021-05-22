@@ -1,11 +1,11 @@
 package config
 
-type Process struct {
+type GlobalProcess struct {
 	Max      int
 	Priority *int
 }
 
-func (p *Process) write(w *writer) error {
+func (p *GlobalProcess) write(w *writer) error {
 	if v := p.Max; v != 0 {
 		if err := w.writeInt("process.max", v); err != nil {
 			return err

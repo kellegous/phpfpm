@@ -25,7 +25,7 @@ type Global struct {
 	LogBuffering              *bool
 	EmergencyRestartThreshold int
 	ProcessControlTimeout     time.Duration
-	Process                   *Process
+	Process                   *GlobalProcess
 	RLimitFiles               int
 	RlimitCore                int
 	Pools                     []*Pool
@@ -69,6 +69,51 @@ func (g *Global) WithProcessControlTimeout(v time.Duration) *Global {
 	g.ProcessControlTimeout = v
 	return g
 }
+
+func (g *Global) WithMaxProcesses(v int) *Global {
+	if p := g.Process; p == nil {
+		g.Process = &GlobalProcess{
+			Max: v,
+		}
+	} else {
+		p.Max = v
+	}
+	return g
+}
+
+func (g *Global) WithProcessPriority(v int) *Global {
+	if p := g.Process; p == nil {
+		g.Process = &GlobalProcess{
+			Priority: &v,
+		}
+	} else {
+		p.Priority = &v
+	}
+	return g
+}
+
+func (g *Global) WithRlimitFiles(v int) *Global {
+	g.RLimitFiles = v
+	return g
+}
+
+func (g *Global) WithRlimitCore(v int) *Global {
+	g.RlimitCore = v
+	return g
+}
+
+func (g *Global) BuildPool(
+	name string,
+	addr string,
+	user string,
+	pmType ProcessManagerType,
+	maxChildren int,
+	fn func(p *Pool),
+) *Global {
+	fn(g.WithPool(name, addr, user, pmType, maxChildren))
+	return g
+}
+
 func (g *Global) WithPool(
 	name string,
 	addr string,
@@ -117,6 +162,10 @@ func (g *Global) Write(w io.Writer) error {
 
 func (g *Global) write(w *writer) error {
 	if err := g.validate(); err != nil {
+		return err
+	}
+
+	if err := w.writeBool("daemon", false); err != nil {
 		return err
 	}
 
