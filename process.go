@@ -19,12 +19,14 @@ func (p *Process) cleanup() error {
 	return os.Remove(p.cf)
 }
 
-func (p *Process) Wait() error {
+func (p *Process) Wait() (*os.ProcessState, error) {
 	defer p.cleanup()
-	if _, err := p.p.Wait(); err != nil {
-		return err
-	}
-	return nil
+	return p.p.Wait()
+}
+
+func (p *Process) Kill() error {
+	defer p.cleanup()
+	return p.p.Signal(os.Interrupt)
 }
 
 func Start(

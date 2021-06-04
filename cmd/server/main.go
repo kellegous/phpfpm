@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/kellegous/phpfpm"
 	"github.com/kellegous/phpfpm/config"
@@ -40,7 +41,16 @@ func main() {
 		log.Panic(err)
 	}
 
-	if err := p.Wait(); err != nil {
+	go func() {
+		time.Sleep(5 * time.Second)
+		if err := p.Kill(); err != nil {
+			log.Panic(err)
+		}
+	}()
+
+	ps, err := p.Wait()
+	if err != nil {
 		log.Panic(err)
 	}
+	log.Println(ps)
 }
